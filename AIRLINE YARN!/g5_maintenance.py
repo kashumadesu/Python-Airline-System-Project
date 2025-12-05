@@ -9,7 +9,7 @@ def menu():
         print("2. Update Status & Log Defects") 
         print("3. Add New Aircraft")
         print("4. Decommission (Delete) Aircraft")
-        print("5. View Maintenance Logs")       # <--- NEW
+        print("5. View Maintenance Logs")     
         print("0. Back to Main Menu")
         choice = input("\nSelect: ")
 
