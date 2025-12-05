@@ -36,7 +36,9 @@ def file_complaint():
     cursor = conn.cursor(dictionary=True)
     
     try:
-        email = get_valid_input("Enter Passenger Email")
+        # NOW VALIDATED
+        email = get_valid_input("Enter Passenger Email", 'email')
+        
         cursor.execute("SELECT passenger_id, name FROM passengers WHERE email = %s", (email,))
         p = cursor.fetchone()
         
