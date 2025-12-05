@@ -63,7 +63,19 @@ Ensure you have the following installed:
 * [Python](https://www.python.org/downloads/) (Check "Add to PATH" during installation)
 * [XAMPP](https://www.apachefriends.org/index.html) (For the MySQL Database)
 
-### 2. Clone the Repository
+* STEP 2: INSTALL REQUIRED LIBRARY
+Open your Command Prompt (cmd) or Terminal and run this command:
+
+DOS
+
+pip install mysql-connector-python
+⚠️ If that doesn't work (error says "pip is not recognized"), try this instead:
+
+DOS
+
+python -m pip install mysql-connector-python
+
+### 3. Clone the Repository
 ```bash
 git clone [https://github.com/yourusername/airline-system.git](https://github.com/yourusername/airline-system.git)
 cd airline-system
