@@ -31,7 +31,7 @@ def main_menu():
         elif choice == '4': g4_crew.menu()
         elif choice == '5': g5_maintenance.menu()
         elif choice == '6': g6_customer.menu()
-        elif choice == '7': admin_panel.menu() # <--- Hidden Logic works here
+        elif choice == '7': admin_panel.menu() 
         elif choice == '0': 
             print("System Shutdown..."); sys.exit()
         else:
