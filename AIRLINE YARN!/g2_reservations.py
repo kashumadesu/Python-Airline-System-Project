@@ -20,30 +20,27 @@ def menu():
 
 def show_seat_map(conn, flight_id):
     """
-    Displays a realistic 20-Row Aircraft Layout.
+    Displays a realistic 30-Row Aircraft Layout (Boeing 737 Style).
     Returns a list of ALL valid seat codes to ensure user input is correct.
     """
-    print("\n" + "="*20 + " SEAT MAP " + "="*20)
-    print("      [A] [B] [C]    [D] [E] [F]") # Layout Header
-    
-    # Get taken seats
+    print("\n" + "="*22 + " SEAT MAP " + "="*22)
+    print("      [A] [B] [C]     [D] [E] [F]") 
+
     cursor = conn.cursor()
     cursor.execute("SELECT seat_number FROM bookings WHERE flight_id = %s AND status = 'Confirmed'", (flight_id,))
     taken = [row[0] for row in cursor.fetchall()] 
     
-    # Define Plane Size (Realism Upgrade)
-    rows = 20
+    rows = 30
     cols = ['A', 'B', 'C', 'D', 'E', 'F']
-    valid_seat_codes = [] # We will store every possible seat here (e.g. 1A, 1B... 20F)
+    valid_seat_codes = [] 
     
     for r in range(1, rows + 1):
-        # Format row number (e.g. " 1" or "10")
         row_str = f"{r:<2}" 
         line = f"Row {row_str}| "
         
         for i, c in enumerate(cols):
             seat_code = f"{r}{c}"
-            valid_seat_codes.append(seat_code) # Add to valid list
+            valid_seat_codes.append(seat_code)
             
             # Visual logic
             if seat_code in taken:
@@ -53,13 +50,13 @@ def show_seat_map(conn, flight_id):
             
             line += f"{marker} "
             
-            # Add an aisle after column C
+            # Add a visual aisle after column C (index 2)
             if i == 2: 
-                line += "   " 
+                line += "    " 
         
         print(line)
         
-    print("="*50)
+    print("="*54)
     print("Legend: [ ] = Available, [X] = Taken")
     return taken, valid_seat_codes
 
@@ -68,18 +65,20 @@ def book_ticket():
     cursor = conn.cursor(dictionary=True)
     
     try:
-        # 1. Identify Passenger
-        email = get_valid_input("\nEnter Passenger Email")
+        # 1. Identify Passenger (NOW VALIDATED)
+        email = get_valid_input("\nEnter Passenger Email", 'email')
+        
         cursor.execute("SELECT * FROM passengers WHERE email = %s", (email,))
         p = cursor.fetchone()
         
         if p:
             print(f"Welcome back, {p['name']} (Tier: {p['tier']})")
             pid = p['passenger_id']
+            p_name = p['name']
         else:
             print("New Passenger Detected.")
-            name = get_valid_input("Full Name")
-            cursor.execute("INSERT INTO passengers (name, email) VALUES (%s, %s)", (name, email))
+            p_name = get_valid_input("Full Name")
+            cursor.execute("INSERT INTO passengers (name, email) VALUES (%s, %s)", (p_name, email))
             conn.commit()
             pid = cursor.lastrowid
 
@@ -92,23 +91,19 @@ def book_ticket():
         fid = get_valid_input("\nEnter Flight ID", int)
         
         # 3. SEAT SELECTION (With Strict Validation)
-        # We now get 'valid_codes' from the map function
         taken_seats, valid_codes = show_seat_map(conn, fid)
         
         while True:
             seat = get_valid_input("Select Seat (e.g. 10A)").upper()
             
-            # VALIDATION 1: Does the seat exist on this plane?
             if seat not in valid_codes:
-                print(f"   [!] Error: Seat '{seat}' does not exist. Please look at the map.")
+                print(f"   [!] Error: Seat '{seat}' does not exist on this plane.")
+                print("       Please enter a Row number (1-30) and Column (A-F). Example: 12A")
                 continue
-                
-            # VALIDATION 2: Is it taken?
             if seat in taken_seats:
                 print(f"   [!] Error: Seat '{seat}' is already occupied.")
                 continue
-                
-            break # Input is valid and available
+            break 
         
         seat_class = get_valid_input("Class (Economy/Business)").title()
         price = 5000 if "Econ" in seat_class else 15000
@@ -144,8 +139,18 @@ def book_ticket():
         cursor.execute("UPDATE passengers SET loyalty_points = loyalty_points + %s WHERE passenger_id = %s", (points, pid))
         
         conn.commit()
-        print(f"\n[SYSTEM] Ticket Issued.")
-        print(f"PNR: {pnr} | Loyalty Points Earned: +{points}")
+        
+        # VISUAL TICKET RECEIPT
+        print("\n" + "="*50)
+        print("       ELECTRONIC TICKET RECEIPT")
+        print("="*50)
+        print(f" PNR REF:   {pnr}")
+        print(f" PASSENGER: {p_name}")
+        print(f" FLIGHT ID: {fid}")
+        print(f" SEAT:      {seat} ({seat_class})")
+        print(f" PRICE:     ₱{price:,.2f}")
+        print(f" STATUS:    CONFIRMED")
+        print("="*50)
         
     except OperationCancelled:
         print("\n[!] Booking Process Cancelled.")
@@ -159,7 +164,7 @@ def view_my_bookings():
     cursor = conn.cursor(dictionary=True)
     
     try:
-        email = get_valid_input("\nEnter your Email to view bookings")
+        email = get_valid_input("\nEnter your Email to view bookings", 'email')
         
         query = """
             SELECT b.pnr, f.flight_number, f.origin, f.destination, f.flight_date, b.seat_number, b.status
