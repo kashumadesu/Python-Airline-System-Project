@@ -1,11 +1,12 @@
 from db_config import get_db_connection, clear_screen, pause, get_valid_input, OperationCancelled
 
 def menu():
+    # AUTO-PATCH: Fixes column types to accept new role names
     apply_database_patch()
     
     while True:
         clear_screen()
-        print("--- [G4] CREW MANAGEMENT ---")
+        print("--- [G4] CREW MANAGEMENT (FULL SCOPE) ---")
         print("1. View Crew Roster (Profiles)")
         print("2. Assign Crew to Flight")
         print("3. View Flight Assignments (Attendance)")
@@ -27,6 +28,7 @@ def apply_database_patch():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        cursor.execute("ALTER TABLE crew MODIFY COLUMN role VARCHAR(50)")
         cursor.execute("ALTER TABLE crew ADD COLUMN salary_rate INT DEFAULT 5000")
         cursor.execute("ALTER TABLE crew ADD COLUMN license_status VARCHAR(50) DEFAULT 'Active'")
         cursor.execute("ALTER TABLE crew ADD COLUMN flight_hours INT DEFAULT 0")
@@ -43,7 +45,8 @@ def view_crew():
     print("-" * 75)
     for c in cursor.fetchall():
         lic = c.get('license_status', 'Active')
-        print(f"{c['crew_id']:<5} {c['name']:<20} {c['role']:<15} {lic:<15} {c['status']}")
+        role_display = c['role'] if c['role'] else "Unknown"
+        print(f"{c['crew_id']:<5} {c['name']:<20} {role_display:<15} {lic:<15} {c['status']}")
     conn.close()
 
 def assign_crew():
@@ -102,14 +105,13 @@ def view_assignments():
     conn.close()
 
 def view_payroll():
-    # Loop keeps user in Payroll menu until they choose to leave
     while True:
         clear_screen()
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
         print("--- PAYROLL SYSTEM ---")
-        print("Rates per Flight: Captain=₱25k | Co-Pilot=₱15k | Cabin Crew=₱4.5k")
+        print("Standard Rates: Pilot=₱25k | Co-Pilot=₱15k | Cabin Crew=₱4.5k")
         
         query = """
             SELECT c.crew_id, c.name, c.role, c.salary_rate, COUNT(fc.assignment_id) as trip_count
@@ -132,7 +134,7 @@ def view_payroll():
         choice = input("\nSelect: ")
         
         if choice == '1':
-            edit_salary(conn) # Pass connection to save reopening it
+            edit_salary(conn)
         elif choice == '0':
             conn.close()
             break
@@ -144,7 +146,6 @@ def edit_salary(conn):
         print("\n--- EDIT SALARY RATE ---")
         cid = get_valid_input("Enter Crew ID to update", int)
         
-        # Check if ID exists (using existing connection)
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT name, salary_rate FROM crew WHERE crew_id = %s", (cid,))
         crew = cursor.fetchone()
@@ -196,18 +197,22 @@ def add_crew():
     try:
         name = get_valid_input("Enter Full Name")
         
-        print("\nSelect Role:")
-        print("[1] Captain (Pilot)       - Rate: ₱25,000/flight")
-        print("[2] First Officer (Co-Pilot) - Rate: ₱15,000/flight")
-        print("[3] Cabin Crew            - Rate: ₱4,500/flight")
+        print("\nSelect Job Role:")
+        print("[1] Pilot        - Rate: ₱25,000/flight")
+        print("[2] Co-Pilot     - Rate: ₱15,000/flight")
+        print("[3] Cabin Crew   - Rate: ₱4,500/flight")
         
         role_opt = get_valid_input("Select Option")
         
+        # Explicit initialization
+        role = ""
+        rate = 0
+        
         if role_opt == '1':
-            role = "Captain"
+            role = "Pilot"
             rate = 25000
         elif role_opt == '2':
-            role = "First Officer"
+            role = "Co-Pilot"
             rate = 15000
         elif role_opt == '3':
             role = "Cabin Crew"
