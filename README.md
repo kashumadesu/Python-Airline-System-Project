@@ -1,30 +1,34 @@
 # ✈️ Airline Management System (Enterprise Edition)
 
-A comprehensive, modular Airline Management System built with **Python** and **MySQL**. This system integrates six distinct operational departments (G1-G6) to manage the entire lifecycle of airline operations, from flight scheduling and maintenance to reservations and customer loyalty.
+A comprehensive, modular **Airline Management System** built with **Python** and **MySQL**. This system integrates six distinct operational departments (G1-G6) to manage the entire lifecycle of airline operations, from flight scheduling and maintenance to reservations and customer loyalty.
+
+---
 
 ## 📋 Project Scope & Modules
 
-This project is divided into 6 integrated modules, simulating a real-world enterprise environment:
+This project is divided into **6 integrated modules**, simulating a real-world enterprise environment.
 
 ### **[G1] Flight Management Module**
 * **Team:** Sapanta, Davis, Redilosa, Mirandilla, Mijares, Cruz
 * **Features:**
-    * Manage flight schedules and routes.
+    * Manage flight schedules, routes, and dates.
+    * Gate Management (Gate assignment logic).
     * Real-time status updates (Scheduled, Delayed, Cancelled).
-    * **Integration:** blocked by G5 (Maintenance) if aircraft is unavailable.
+    * **Integration:** Scheduling is blocked by **G5 (Maintenance)** if the selected aircraft is unavailable.
 
 ### **[G2] Reservation & Ticketing Module**
 * **Team:** Delos Santos, Rolloque, Sulayao
 * **Features:**
-    * Booking system with PNR generation.
+    * Booking system with automatic **PNR generation**.
     * Seat Class selection (Economy/Business).
-    * **Integration:** Auto-creates customer profiles in G6; Checks G1 for flight availability.
+    * **Payment Simulation:** Secure dummy payment gateway simulation.
+    * **Integration:** Auto-creates customer profiles in **G6**; Checks **G1** for flight availability.
 
 ### **[G3] Check-in & Boarding Module**
 * **Team:** Gueta, Pecaso, Fallar
 * **Features:**
     * Validates PNR and Payment status.
-    * Generates visual Boarding Passes.
+    * Generates visual **ASCII Boarding Passes**.
     * Tracks baggage handling.
 
 ### **[G4] Crew Management Module**
@@ -56,26 +60,37 @@ This project is divided into 6 integrated modules, simulating a real-world enter
 
 ---
 
+## AirlineSystem/
+│
+├── main.py                # Entry point (Main Dashboard)
+├── db_config.py           # Database connection & Input Validation
+├── admin_panel.py         # Secret Admin Dashboard (God Mode)
+│
+├── g1_flights.py          # Flight operations logic
+├── g2_reservations.py     # Booking logic
+├── g3_checkin.py          # Boarding pass logic
+├── g4_crew.py             # Crew assignment logic
+├── g5_maintenance.py      # Aircraft status logic
+└── g6_customer.py         # Loyalty program logic
+
+---
+
 ## 🚀 Installation & Setup
+
+Follow these steps to run the system on your local machine.
 
 ### 1. Prerequisites
 Ensure you have the following installed:
-* [Python](https://www.python.org/downloads/) (Check "Add to PATH" during installation)
+* [Python](https://www.python.org/downloads/) (**Important:** Check "Add to PATH" during installation)
 * [XAMPP](https://www.apachefriends.org/index.html) (For the MySQL Database)
 
-* STEP 2: INSTALL REQUIRED LIBRARY
-Open your Command Prompt (cmd) or Terminal and run this command:
+### 2. Install Required Library
+Open your Command Prompt (cmd) or Terminal and run:
 
-DOS
-
+```bash
 pip install mysql-connector-python
-⚠️ If that doesn't work (error says "pip is not recognized"), try this instead:
-
-DOS
-
+or
 python -m pip install mysql-connector-python
 
-### 3. Clone the Repository
-```bash
-git clone [https://github.com/yourusername/airline-system.git](https://github.com/yourusername/airline-system.git)
-cd airline-system
+
+
