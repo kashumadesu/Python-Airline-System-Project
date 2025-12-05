@@ -60,11 +60,15 @@ This project is divided into **6 integrated modules**, simulating a real-world e
 
 ---
 
-## AirlineSystem/
+## 📂 Project Structure
+
+```text
+AirlineSystem/
 │
 ├── main.py                # Entry point (Main Dashboard)
 ├── db_config.py           # Database connection & Input Validation
 ├── admin_panel.py         # Secret Admin Dashboard (God Mode)
+├── database_setup.sql     # SQL Script to create tables (Run this first!)
 │
 ├── g1_flights.py          # Flight operations logic
 ├── g2_reservations.py     # Booking logic
@@ -72,6 +76,7 @@ This project is divided into **6 integrated modules**, simulating a real-world e
 ├── g4_crew.py             # Crew assignment logic
 ├── g5_maintenance.py      # Aircraft status logic
 └── g6_customer.py         # Loyalty program logic
+```
 
 ---
 
