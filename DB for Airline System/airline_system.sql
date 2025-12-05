@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 05, 2025 at 04:35 PM
+-- Generation Time: Dec 05, 2025 at 05:34 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -67,7 +67,11 @@ INSERT INTO `bookings` (`booking_id`, `pnr`, `flight_id`, `passenger_id`, `seat_
 (1, 'LBB2SO', 1, 2, 'Business', '10', 15000.00, 'Confirmed'),
 (3, 'EGSNEZ', 1, 2, 'Business', '10', 15000.00, 'Confirmed'),
 (4, 'RA9PVP', 1, 4, 'Business', '10', 15000.00, 'Cancelled'),
-(5, 'COUJ3Y', 1, 5, 'Business', '12', 15000.00, 'Confirmed');
+(5, 'COUJ3Y', 1, 5, 'Business', '12', 15000.00, 'Confirmed'),
+(6, 'PV3OE1', 1, 7, 'Economy', '10A', 5000.00, 'Confirmed'),
+(7, 'K9UVQ2', 1, 8, 'Business', '11A', 15000.00, 'Confirmed'),
+(8, 'G53ZWT', 1, 9, 'Business', '10B', 15000.00, 'Confirmed'),
+(9, 'B4AG44', 1, 10, 'Business', '30A', 15000.00, 'Confirmed');
 
 -- --------------------------------------------------------
 
@@ -98,7 +102,7 @@ INSERT INTO `checkin` (`checkin_id`, `booking_id`, `bags_checked`, `boarding_tim
 CREATE TABLE `crew` (
   `crew_id` int(11) NOT NULL,
   `name` varchar(100) DEFAULT NULL,
-  `role` enum('Pilot','Co-Pilot','Cabin Crew') DEFAULT NULL,
+  `role` varchar(50) DEFAULT NULL,
   `status` enum('Available','On-Duty','Resting') DEFAULT 'Available',
   `salary_rate` int(11) DEFAULT 5000,
   `license_status` varchar(50) DEFAULT 'Active',
@@ -112,7 +116,13 @@ CREATE TABLE `crew` (
 INSERT INTO `crew` (`crew_id`, `name`, `role`, `status`, `salary_rate`, `license_status`, `flight_hours`) VALUES
 (1, 'Capt. Ri', 'Pilot', 'On-Duty', 29999, 'Active', 0),
 (2, 'Sarah Lin', 'Cabin Crew', 'On-Duty', 5000, 'Active', 0),
-(3, 'Michael', 'Pilot', 'Available', 30000, 'Active', 0);
+(3, 'Michael', 'Pilot', 'Available', 30000, 'Active', 0),
+(4, 'Ken Sebastian', 'Co-Pilot', 'On-Duty', 15000, 'Active', 4),
+(5, 'John Paul Irenio', 'Pilot', 'Available', 25000, 'Active', 0),
+(6, 'Jhastine Bieber', 'Cabin Crew', 'Available', 4500, 'Active', 0),
+(7, 'Yvez Saint Lorenz', 'Pilot', 'Available', 25000, 'Active', 0),
+(8, 'John Martin Mariano', 'Cabin Crew', 'Available', 4500, 'Active', 0),
+(9, 'Jordan Cabs', 'Cabin Crew', 'Available', 4500, 'Active', 0);
 
 -- --------------------------------------------------------
 
@@ -128,6 +138,13 @@ CREATE TABLE `feedback` (
   `status` varchar(20) DEFAULT 'Open',
   `date_filed` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `feedback`
+--
+
+INSERT INTO `feedback` (`feedback_id`, `passenger_id`, `category`, `message`, `status`, `date_filed`) VALUES
+(1, 2, 'Feedback', 'It\'s Amazing Customer Service Thank you for your hardwork keep it up!', 'Resolved', '2025-12-06 00:22:53');
 
 -- --------------------------------------------------------
 
@@ -172,7 +189,8 @@ CREATE TABLE `flight_crew` (
 
 INSERT INTO `flight_crew` (`assignment_id`, `flight_id`, `crew_id`) VALUES
 (1, 1, 2),
-(2, 1, 1);
+(2, 1, 1),
+(3, 1, 4);
 
 -- --------------------------------------------------------
 
@@ -212,7 +230,12 @@ INSERT INTO `passengers` (`passenger_id`, `name`, `email`, `phone`, `loyalty_poi
 (2, 'Michael April Boquiron', 'Michael@gmai.com', NULL, 3000, 'Blue'),
 (3, '', 'Michael@gmail.com', NULL, 0, 'Blue'),
 (4, 'Ken Sapantan Delos Santos Jr.', 'Sapanta@gmail.com', NULL, 1500, 'Blue'),
-(5, 'Ken Abner Rapanan Sr.', 'Ken@gmail.com', NULL, 1500, 'Blue');
+(5, 'Ken Abner Rapanan Sr.', 'Ken@gmail.com', NULL, 1500, 'Blue'),
+(6, 'Jabners Ramos', 'Abner@gmail.com', NULL, 0, 'Blue'),
+(7, 'Kent Santino Juan', 'Ramos@gmail.com', NULL, 500, 'Blue'),
+(8, 'Eric Yvez Ramos', 'KenRamos@gmail.com', NULL, 1500, 'Blue'),
+(9, 'Sander Cruz Ford', 'Sander@gmail.com', NULL, 1500, 'Blue'),
+(10, 'Ken Yap', 'KenEricYap@gmail.com', NULL, 1500, 'Blue');
 
 --
 -- Indexes for dumped tables
@@ -297,7 +320,7 @@ ALTER TABLE `aircrafts`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `booking_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `booking_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `checkin`
@@ -309,13 +332,13 @@ ALTER TABLE `checkin`
 -- AUTO_INCREMENT for table `crew`
 --
 ALTER TABLE `crew`
-  MODIFY `crew_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `crew_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `feedback`
 --
 ALTER TABLE `feedback`
-  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `flights`
@@ -327,7 +350,7 @@ ALTER TABLE `flights`
 -- AUTO_INCREMENT for table `flight_crew`
 --
 ALTER TABLE `flight_crew`
-  MODIFY `assignment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `assignment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `maintenance_logs`
@@ -339,7 +362,7 @@ ALTER TABLE `maintenance_logs`
 -- AUTO_INCREMENT for table `passengers`
 --
 ALTER TABLE `passengers`
-  MODIFY `passenger_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `passenger_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- Constraints for dumped tables
