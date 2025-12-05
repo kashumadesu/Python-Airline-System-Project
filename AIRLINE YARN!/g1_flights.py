@@ -23,17 +23,15 @@ def apply_database_patch():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Try to add the column. If it exists, MySQL throws an error, which we ignore.
         cursor.execute("ALTER TABLE flights ADD COLUMN gate VARCHAR(10) AFTER flight_date")
         conn.commit()
     except:
-        pass # Column likely already exists
+        pass 
     conn.close()
 
 def view_schedule():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    # The query works now because the patch above ensures 'gate' exists
     cursor.execute("""
         SELECT f.flight_number, f.origin, f.destination, f.flight_date, f.status, f.gate, a.model 
         FROM flights f JOIN aircrafts a ON f.aircraft_id = a.aircraft_id
@@ -87,7 +85,6 @@ def add_flight():
 
 def update_status():
     view_schedule()
-    # FIX: Connect first so 'conn' exists if we cancel
     conn = get_db_connection()
     cursor = conn.cursor()
     
