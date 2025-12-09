@@ -4,6 +4,7 @@ import g1_flights
 import g2_reservations
 import g3_checkin
 import g4_crew
+import time
 import g5_maintenance
 import g6_customer
 import admin_panel
@@ -25,13 +26,16 @@ def main_menu():
         
         choice = input("\nSelect Module: ")
         
-        if choice == '1': g1_flights.menu()
-        elif choice == '2': g2_reservations.menu()
-        elif choice == '3': g3_checkin.menu()
-        elif choice == '4': g4_crew.menu()
-        elif choice == '5': g5_maintenance.menu()
-        elif choice == '6': g6_customer.menu()
-        elif choice == '7': admin_panel.menu() 
+        if choice in ('1','G1','g1'): g1_flights.menu()
+        elif choice in ('2','G2','g2'): g2_reservations.menu()
+        elif choice in ('3','G3','g3'): g3_checkin.menu()
+        elif choice in ('4', 'G4', 'g4'):
+            print("Going to G4...")
+            time.sleep(1)
+            g4_crew.menu()
+        elif choice in ('5','G5','g5'): g5_maintenance.menu()
+        elif choice in ('6','G6','g6'): g6_customer.menu()
+        elif choice in ('69', 'Admin', 'admin'): admin_panel.menu() 
         elif choice == '0': 
             print("System Shutdown..."); sys.exit()
         else:
