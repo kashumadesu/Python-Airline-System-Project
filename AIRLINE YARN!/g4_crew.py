@@ -11,8 +11,8 @@ def menu():
         print("4. Payroll System") 
         print("5. Manage Certifications")
         print("6. Hire New Crew Member")
-        print("7. Reassign Role (Promote/Change Job)")  # <--- NEW
-        print("8. Manage Job Roles (Add New Jobs)")    # <--- NEW
+        print("7. Reassign Role")  
+        print("8. Manage Job Roles")    
         print("0. Back to Main Menu")
         choice = input("\nSelect: ")
         
@@ -216,7 +216,6 @@ def add_crew():
     try:
         name = get_valid_input("Enter Full Name")
         
-        # Fetch roles from DB instead of hardcoding
         print("\nSelect Job Role:")
         cursor.execute("SELECT * FROM crew_roles")
         roles = cursor.fetchall()
