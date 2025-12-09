@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 05, 2025 at 05:34 PM
+-- Generation Time: Dec 09, 2025 at 06:40 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -116,13 +116,37 @@ CREATE TABLE `crew` (
 INSERT INTO `crew` (`crew_id`, `name`, `role`, `status`, `salary_rate`, `license_status`, `flight_hours`) VALUES
 (1, 'Capt. Ri', 'Pilot', 'On-Duty', 29999, 'Active', 0),
 (2, 'Sarah Lin', 'Cabin Crew', 'On-Duty', 5000, 'Active', 0),
-(3, 'Michael', 'Pilot', 'Available', 30000, 'Active', 0),
+(3, 'Michael', 'Co-Pilot', 'Available', 15000, 'Active', 0),
 (4, 'Ken Sebastian', 'Co-Pilot', 'On-Duty', 15000, 'Active', 4),
 (5, 'John Paul Irenio', 'Pilot', 'Available', 25000, 'Active', 0),
 (6, 'Jhastine Bieber', 'Cabin Crew', 'Available', 4500, 'Active', 0),
 (7, 'Yvez Saint Lorenz', 'Pilot', 'Available', 25000, 'Active', 0),
 (8, 'John Martin Mariano', 'Cabin Crew', 'Available', 4500, 'Active', 0),
-(9, 'Jordan Cabs', 'Cabin Crew', 'Available', 4500, 'Active', 0);
+(9, 'Jordan Cabs', 'Cabin Crew', 'Available', 4500, 'Active', 0),
+(10, 'Carlos Smith', 'Pilot', 'Available', 25000, 'Active', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `crew_roles`
+--
+
+CREATE TABLE `crew_roles` (
+  `role_id` int(11) NOT NULL,
+  `role_name` varchar(50) NOT NULL,
+  `default_salary` int(11) DEFAULT 5000
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `crew_roles`
+--
+
+INSERT INTO `crew_roles` (`role_id`, `role_name`, `default_salary`) VALUES
+(1, 'Pilot', 25000),
+(2, 'Co-Pilot', 15000),
+(3, 'Cabin Crew', 4500),
+(4, 'Air Marshal', 10000),
+(5, 'Flight Engineer', 12000);
 
 -- --------------------------------------------------------
 
@@ -270,6 +294,13 @@ ALTER TABLE `crew`
   ADD PRIMARY KEY (`crew_id`);
 
 --
+-- Indexes for table `crew_roles`
+--
+ALTER TABLE `crew_roles`
+  ADD PRIMARY KEY (`role_id`),
+  ADD UNIQUE KEY `role_name` (`role_name`);
+
+--
 -- Indexes for table `feedback`
 --
 ALTER TABLE `feedback`
@@ -332,7 +363,13 @@ ALTER TABLE `checkin`
 -- AUTO_INCREMENT for table `crew`
 --
 ALTER TABLE `crew`
-  MODIFY `crew_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `crew_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `crew_roles`
+--
+ALTER TABLE `crew_roles`
+  MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `feedback`
