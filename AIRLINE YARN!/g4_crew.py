@@ -4,7 +4,7 @@ from db_config import get_db_connection, clear_screen, pause, get_valid_input, O
 def menu():
     while True:
         clear_screen()
-        print("--- [G4] CREW MANAGEMENT (DYNAMIC ROLES) ---")
+        print("--- [G4] CREW MANAGEMENT (SECURE) ---")
         print("1. View Crew Roster")
         print("2. Assign Crew to Flight")
         print("3. View Assignments")
@@ -50,32 +50,55 @@ def assign_crew():
     
     cursor.execute("SELECT flight_id, flight_number, destination FROM flights WHERE status='Scheduled'")
     flights = cursor.fetchall()
+    
+    valid_flight_ids = []
+    
     print("\n--- SCHEDULED FLIGHTS ---")
-    for f in flights: print(f"ID {f['flight_id']} | {f['flight_number']} to {f['destination']}")
+    for f in flights: 
+        valid_flight_ids.append(f['flight_id'])
+        print(f"ID {f['flight_id']} | {f['flight_number']} to {f['destination']}")
     
     try:
         fid = get_valid_input("\nEnter Flight ID", int)
+        
+        if fid not in valid_flight_ids:
+            print(f"\n[!] ERROR: Flight ID {fid} cannot be selected.")
+            print("    Reason: Flight is active, cancelled, or does not exist.")
+            conn.close()
+            return 
+        
         cursor.execute("SELECT * FROM crew WHERE status='Available' AND license_status='Active'")
         available_crew = cursor.fetchall()
         
         if not available_crew:
-            print("\n[!] No crew available.")
+            print("\n[!] No crew available (Check Rest Periods or Certifications).")
             conn.close()
             return
 
         print("\n--- AVAILABLE CREW ---")
+        
+        valid_crew_ids = []
         for c in available_crew:
+            valid_crew_ids.append(c['crew_id'])
             print(f"ID {c['crew_id']}: {c['name']} ({c['role']})")
 
         cid = get_valid_input("\nEnter Crew ID to assign", int)
+        
+        if cid not in valid_crew_ids:
+            print(f"\n[!] ERROR: Crew ID {cid} is NOT available.")
+            print("    Reason: They are On-Duty, Suspended, or do not exist.")
+            conn.close()
+            return 
+        
         cursor.execute("INSERT INTO flight_crew (flight_id, crew_id) VALUES (%s, %s)", (fid, cid))
         cursor.execute("UPDATE crew SET status = 'On-Duty', flight_hours = flight_hours + 4 WHERE crew_id = %s", (cid,))
         conn.commit()
-        print(f"\n[SUCCESS] Crew Member assigned.")
+        print(f"\n[SUCCESS] Crew Member assigned. Status set to On-Duty.")
+        
     except OperationCancelled:
-        print("\n[!] Cancelled.")
+        print("\n[!] Assignment Cancelled.")
     except Exception as e:
-        print(f"\n[ERROR] {e}")
+        print(f"\n[ERROR] Assignment failed: {e}")
     conn.close()
 
 def view_assignments():
@@ -125,30 +148,139 @@ def view_payroll():
 def edit_salary(conn):
     try:
         cid = get_valid_input("Enter Crew ID", int)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM crew WHERE crew_id = %s", (cid,))
+        if not cursor.fetchone():
+            print("[!] Crew ID not found.")
+            return
+
         rate = get_valid_input("Enter New Rate", int)
-        cursor = conn.cursor()
         cursor.execute("UPDATE crew SET salary_rate = %s WHERE crew_id = %s", (rate, cid))
         conn.commit()
         print("[SUCCESS] Salary Updated.")
-    except: pass
+        pause()
+    except OperationCancelled: pass
 
+# --- 5. MANAGE CERTIFICATIONS (SECURED) ---
 def manage_certifications():
     view_crew()
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     try:
-        cid = get_valid_input("\nEnter Crew ID", int)
+        cid = get_valid_input("\nEnter Crew ID to update", int)
+        
+        # CHECK 1: Does ID Exist?
+        cursor.execute("SELECT status, name FROM crew WHERE crew_id = %s", (cid,))
+        crew = cursor.fetchone()
+        
+        if not crew:
+            print("[!] Error: Crew ID not found.")
+            conn.close(); return
+
+        # CHECK 2: Is Crew On-Duty? (CRITICAL FIX)
+        if crew['status'] == 'On-Duty':
+            print(f"[!] SAFETY ALERT: Cannot change license status while {crew['name']} is On-Duty.")
+            print("    Please wait for the flight to land or unassign them first.")
+            conn.close(); return
+
         print("[1] Active  [2] Expired  [3] Suspended")
         opt = get_valid_input("Select Status")
         status_map = {'1': 'Active', '2': 'Expired', '3': 'Suspended'}
+        
         if opt in status_map:
             cursor.execute("UPDATE crew SET license_status = %s WHERE crew_id = %s", (status_map[opt], cid))
             conn.commit()
             print("[SUCCESS] Updated.")
-    except: pass
+        else:
+            print("[!] Invalid Option.")
+            
+    except OperationCancelled: print("\n[!] Cancelled.")
     conn.close()
 
-# --- 1. MANAGE JOB ROLES (Add 'Police', etc.) ---
+# --- 6. ADD CREW (SECURED) ---
+def add_crew():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    print("\n--- HIRE NEW CREW MEMBER ---")
+    try:
+        name = get_valid_input("Enter Full Name")
+        
+        print("\nSelect Job Role:")
+        cursor.execute("SELECT * FROM crew_roles")
+        roles = cursor.fetchall()
+        valid_role_ids = []
+        
+        for r in roles:
+            valid_role_ids.append(r['role_id'])
+            print(f"[{r['role_id']}] {r['role_name']:<15} - Rate: ₱{r['default_salary']:,}")
+        
+        # LOOP UNTIL VALID ROLE
+        while True:
+            rid = get_valid_input("Select Option", int)
+            if rid in valid_role_ids: break
+            print("[!] Invalid Role Selection. Try again.")
+
+        selected = next((r for r in roles if r['role_id'] == rid), None)
+        
+        cursor.execute("""
+            INSERT INTO crew (name, role, salary_rate, status, license_status) 
+            VALUES (%s, %s, %s, 'Available', 'Active')
+        """, (name, selected['role_name'], selected['default_salary']))
+        conn.commit()
+        print(f"\n[SUCCESS] {name} hired as {selected['role_name']}.")
+            
+    except OperationCancelled: print("\n[!] Cancelled.")
+    except Exception as e: print(f"[ERROR] {e}")
+    conn.close()
+
+# --- 7. REASSIGN ROLE (SECURED) ---
+def reassign_role():
+    view_crew()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        cid = get_valid_input("\nEnter Crew ID to Reassign", int)
+        
+        # CHECK 1: Exists?
+        cursor.execute("SELECT name, status FROM crew WHERE crew_id = %s", (cid,))
+        crew = cursor.fetchone()
+        if not crew:
+            print("[!] Crew ID not found.")
+            conn.close(); return
+
+        # CHECK 2: On-Duty?
+        if crew['status'] == 'On-Duty':
+            print(f"[!] SAFETY ALERT: Cannot reassign role while {crew['name']} is On-Duty.")
+            conn.close(); return
+
+        print("\nSelect New Role:")
+        cursor.execute("SELECT * FROM crew_roles")
+        roles = cursor.fetchall()
+        valid_role_ids = []
+        
+        for r in roles:
+            valid_role_ids.append(r['role_id'])
+            print(f"[{r['role_id']}] {r['role_name']}")
+            
+        # LOOP UNTIL VALID ROLE
+        while True:
+            rid = get_valid_input("Select Role ID", int)
+            if rid in valid_role_ids: break
+            print("[!] Invalid Role ID. Try again.")
+
+        selected = next((r for r in roles if r['role_id'] == rid), None)
+        
+        cursor.execute("UPDATE crew SET role = %s, salary_rate = %s WHERE crew_id = %s", 
+                       (selected['role_name'], selected['default_salary'], cid))
+        conn.commit()
+        print(f"\n[SUCCESS] Role changed to {selected['role_name']}.")
+            
+    except OperationCancelled: print("\n[!] Cancelled.")
+    except Exception as e: print(f"[ERROR] {e}")
+    conn.close()
+
+# --- 8. MANAGE JOB ROLES (SECURED) ---
 def manage_job_roles():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -176,66 +308,8 @@ def manage_job_roles():
             print(f"\n[SUCCESS] Role '{name}' added to database.")
             
     except Exception as e:
-        print(f"[ERROR] {e}")
-    conn.close()
-
-# --- 2. REASSIGN ROLE (Promote/Change Job) ---
-def reassign_role():
-    view_crew()
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    try:
-        cid = get_valid_input("\nEnter Crew ID to Reassign", int)
-        
-        # Show available roles from DB
-        print("\nSelect New Role:")
-        cursor.execute("SELECT * FROM crew_roles")
-        roles = cursor.fetchall()
-        for r in roles:
-            print(f"[{r['role_id']}] {r['role_name']}")
-            
-        rid = get_valid_input("Select Role ID", int)
-        selected = next((r for r in roles if r['role_id'] == rid), None)
-        
-        if selected:
-            cursor.execute("UPDATE crew SET role = %s, salary_rate = %s WHERE crew_id = %s", 
-                           (selected['role_name'], selected['default_salary'], cid))
-            conn.commit()
-            print(f"\n[SUCCESS] Role changed to {selected['role_name']}.")
-            
-    except OperationCancelled: pass
-    except Exception as e: print(f"[ERROR] {e}")
-    conn.close()
-
-# --- 3. ADD CREW (Dynamic List) ---
-def add_crew():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    print("\n--- HIRE NEW CREW MEMBER ---")
-    try:
-        name = get_valid_input("Enter Full Name")
-        
-        print("\nSelect Job Role:")
-        cursor.execute("SELECT * FROM crew_roles")
-        roles = cursor.fetchall()
-        
-        for r in roles:
-            print(f"[{r['role_id']}] {r['role_name']:<15} - Rate: ₱{r['default_salary']:,}")
-        
-        rid = get_valid_input("Select Option", int)
-        selected = next((r for r in roles if r['role_id'] == rid), None)
-        
-        if selected:
-            cursor.execute("""
-                INSERT INTO crew (name, role, salary_rate, status, license_status) 
-                VALUES (%s, %s, %s, 'Available', 'Active')
-            """, (name, selected['role_name'], selected['default_salary']))
-            conn.commit()
-            print(f"\n[SUCCESS] {name} hired as {selected['role_name']}.")
+        if "Duplicate entry" in str(e):
+            print(f"[!] Error: Role '{name}' already exists.")
         else:
-            print("[!] Invalid Role.")
-            
-    except OperationCancelled: pass
-    except Exception as e: print(f"[ERROR] {e}")
+            print(f"[ERROR] {e}")
     conn.close()
