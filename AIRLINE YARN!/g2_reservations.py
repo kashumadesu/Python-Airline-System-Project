@@ -3,223 +3,320 @@ import random
 import string
 import time
 
+EMAIL_DOMAINS = [
+    "@gmail.com",
+    "@yahoo.com",
+    "@hotmail.com",
+    "@outlook.com",
+    "@icloud.com"
+]
+
+CLASSES = ["ECONOMY", "BUSINESS"]
+
+def is_valid_email_domain(email):
+    return any(email.endswith(domain) for domain in EMAIL_DOMAINS)
+
+def is_valid_class(cls):
+    return cls.upper() in CLASSES
+
+def get_valid_name(prompt):
+    while True:
+        name = input(f"{prompt}: ").strip()
+        if all(c.isalpha() or c.isspace() for c in name) and name:
+            return name
+        print("Invalid name. Letters and spaces only.")
+
 def menu():
     while True:
         clear_screen()
-        print("--- [G2] RESERVATION SYSTEM ---")
+        print("--- [G2] RESERVATION & TICKETING SYSTEM ---")
         print("1. Book a Ticket")
         print("2. View My Bookings")
-        print("3. Cancel a Booking") 
+        print("3. Cancel a Booking")
+        print("4. Upgrade Booking Class")
+        print("5. Check-in for Flight")
         print("0. Back to Main Menu")
+
         choice = input("\nSelect: ")
-        
+
         if choice == '1': book_ticket(); pause()
         elif choice == '2': view_my_bookings(); pause()
         elif choice == '3': cancel_booking(); pause()
+        elif choice == '4': upgrade_booking(); pause()
+        elif choice == '5': check_in(); pause()
         elif choice == '0': break
 
 def show_seat_map(conn, flight_id):
-    """
-    Displays a realistic 30-Row Aircraft Layout (Boeing 737 Style).
-    Returns a list of ALL valid seat codes to ensure user input is correct.
-    """
     print("\n" + "="*22 + " SEAT MAP " + "="*22)
-    print("      [A] [B] [C]     [D] [E] [F]") 
+    print("      [A] [B] [C]     [D] [E] [F]")
 
     cursor = conn.cursor()
-    cursor.execute("SELECT seat_number FROM bookings WHERE flight_id = %s AND status = 'Confirmed'", (flight_id,))
-    taken = [row[0] for row in cursor.fetchall()] 
-    
+    cursor.execute(
+        "SELECT seat_number FROM bookings WHERE flight_id=%s AND status='Confirmed'",
+        (flight_id,)
+    )
+    taken = [row[0] for row in cursor.fetchall()]
+
     rows = 30
-    cols = ['A', 'B', 'C', 'D', 'E', 'F']
-    valid_seat_codes = [] 
-    
-    for r in range(1, rows + 1):
-        row_str = f"{r:<2}" 
-        line = f"Row {row_str}| "
-        
-        for i, c in enumerate(cols):
-            seat_code = f"{r}{c}"
-            valid_seat_codes.append(seat_code)
-            
-            # Visual logic
-            if seat_code in taken:
-                marker = "[X]" # Taken
-            else:
-                marker = "[ ]" # Available
-            
-            line += f"{marker} "
-            
-            # Add a visual aisle after column C (index 2)
-            if i == 2: 
-                line += "    " 
-        
+    cols = ['A','B','C','D','E','F']
+    valid_codes = []
+
+    for r in range(1, rows+1):
+        line = f"Row {r:<2}| "
+        for i,c in enumerate(cols):
+            seat = f"{r}{c}"
+            valid_codes.append(seat)
+            line += "[X] " if seat in taken else "[ ] "
+            if i == 2:
+                line += "   "
         print(line)
-        
+
     print("="*54)
-    print("Legend: [ ] = Available, [X] = Taken")
-    return taken, valid_seat_codes
+    return taken, valid_codes
 
 def book_ticket():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
-        # 1. Identify Passenger (NOW VALIDATED)
-        email = get_valid_input("\nEnter Passenger Email", 'email')
-        
-        cursor.execute("SELECT * FROM passengers WHERE email = %s", (email,))
-        p = cursor.fetchone()
-        
-        if p:
-            print(f"Welcome back, {p['name']} (Tier: {p['tier']})")
-            pid = p['passenger_id']
-            p_name = p['name']
+        while True:
+            email = get_valid_input("Enter Passenger Email", "email")
+            if is_valid_email_domain(email):
+                break
+            print("[!] Invalid email domain.")
+
+        cursor.execute("SELECT * FROM passengers WHERE email=%s", (email,))
+        passenger = cursor.fetchone()
+
+        if passenger:
+            pid = passenger['passenger_id']
+            pname = passenger['name']
         else:
-            print("New Passenger Detected.")
-            p_name = get_valid_input("Full Name")
-            cursor.execute("INSERT INTO passengers (name, email) VALUES (%s, %s)", (p_name, email))
+            pname = get_valid_name("Full Name")
+            cursor.execute(
+                "INSERT INTO passengers (name, email) VALUES (%s,%s)",
+                (pname, email)
+            )
             conn.commit()
             pid = cursor.lastrowid
 
-        # 2. Select Flight
-        cursor.execute("SELECT flight_id, flight_number, destination, flight_date FROM flights WHERE status='Scheduled'")
+        cursor.execute(
+            "SELECT flight_id, flight_number, destination, flight_date FROM flights WHERE status='Scheduled'"
+        )
         flights = cursor.fetchall()
+
         print("\n--- AVAILABLE FLIGHTS ---")
-        for f in flights: print(f"ID {f['flight_id']} | {f['flight_number']} to {f['destination']} on {f['flight_date']}")
-        
-        fid = get_valid_input("\nEnter Flight ID", int)
-        
-        # 3. SEAT SELECTION (With Strict Validation)
-        taken_seats, valid_codes = show_seat_map(conn, fid)
-        
+        for f in flights:
+            print(f"ID {f['flight_id']} | {f['flight_number']} to {f['destination']} on {f['flight_date']}")
+
         while True:
-            seat = get_valid_input("Select Seat (e.g. 10A)").upper()
-            
-            if seat not in valid_codes:
-                print(f"   [!] Error: Seat '{seat}' does not exist on this plane.")
-                print("       Please enter a Row number (1-30) and Column (A-F). Example: 12A")
-                continue
-            if seat in taken_seats:
-                print(f"   [!] Error: Seat '{seat}' is already occupied.")
-                continue
-            break 
-        
-        seat_class = get_valid_input("Class (Economy/Business)").title()
-        price = 5000 if "Econ" in seat_class else 15000
-        
-        # 4. PAYMENT SIMULATION 
-        print(f"\n" + "="*40)
-        print(f"   SECURE PAYMENT GATEWAY (₱{price:,.2f})")
-        print("="*40)
-        
-        while True:
-            card = get_valid_input("Enter Credit Card Number (16 digits)")
-            if len(card) == 16 and card.isdigit():
+            fid = get_valid_input("Enter Flight ID", int)
+            cursor.execute("SELECT * FROM flights WHERE flight_id=%s", (fid,))
+            flight = cursor.fetchone()
+            if flight and flight['status'] == 'Scheduled':
                 break
-            print("   [!] Declined: Invalid Card Format.")
+            print("[!] Invalid flight.")
 
-        cvv = get_valid_input("Enter CVV")
-        
-        print("\nContacting Bank...", end="", flush=True)
+        taken, valid = show_seat_map(conn, fid)
+
+        while True:
+            seat = get_valid_input("Select Seat (e.g. 12A)").upper()
+            if seat in valid and seat not in taken:
+                break
+            print("[!] Invalid or taken seat.")
+
+        while True:
+            seat_class = get_valid_input("Class (Economy/Business)").upper()
+            if is_valid_class(seat_class):
+                break
+            print("[!] Invalid class.")
+
+        seat_class = seat_class.title()
+        price = 5000 if seat_class == "Economy" else 15000
+
+        print(f"\nProcessing payment of ₱{price}...")
         time.sleep(1)
-        print(" Authorized.")
-        print(f"[SUCCESS] Payment of ₱{price} Received.")
-        print("="*40)
+        print("[SUCCESS] Payment Authorized.")
 
-        # 5. Finalize Booking
         pnr = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        
+
         cursor.execute("""
-            INSERT INTO bookings (pnr, flight_id, passenger_id, seat_class, seat_number, price, status) 
-            VALUES (%s, %s, %s, %s, %s, %s, 'Confirmed')
+            INSERT INTO bookings (pnr, flight_id, passenger_id, seat_class, seat_number, price, status)
+            VALUES (%s,%s,%s,%s,%s,%s,'Confirmed')
         """, (pnr, fid, pid, seat_class, seat, price))
-        
+
         points = int(price * 0.10)
-        cursor.execute("UPDATE passengers SET loyalty_points = loyalty_points + %s WHERE passenger_id = %s", (points, pid))
-        
+        cursor.execute(
+            "UPDATE passengers SET loyalty_points = loyalty_points + %s WHERE passenger_id=%s",
+            (points, pid)
+        )
+
         conn.commit()
-        
-        # VISUAL TICKET RECEIPT
-        print("\n" + "="*50)
-        print("       ELECTRONIC TICKET RECEIPT")
-        print("="*50)
-        print(f" PNR REF:   {pnr}")
-        print(f" PASSENGER: {p_name}")
-        print(f" FLIGHT ID: {fid}")
-        print(f" SEAT:      {seat} ({seat_class})")
-        print(f" PRICE:     ₱{price:,.2f}")
-        print(f" STATUS:    CONFIRMED")
-        print("="*50)
-        
+
+        print("\n--- E-TICKET ---")
+        print("PNR:", pnr)
+        print("Passenger:", pname)
+        print("Seat:", seat, seat_class)
+        print("Price:", price)
+
     except OperationCancelled:
-        print("\n[!] Booking Process Cancelled.")
-    except Exception as e:
-        print(f"[ERROR] Booking Failed: {e}")
+        print("[!] Booking cancelled.")
     finally:
         conn.close()
 
 def view_my_bookings():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
-        email = get_valid_input("\nEnter your Email to view bookings", 'email')
-        
-        query = """
-            SELECT b.pnr, f.flight_number, f.origin, f.destination, f.flight_date, b.seat_number, b.status
+        email = get_valid_input("Enter Email", "email")
+        cursor.execute("""
+            SELECT b.pnr, f.flight_number, f.origin, f.destination, f.flight_date,
+                   b.seat_number, b.seat_class, b.status
             FROM bookings b
             JOIN passengers p ON b.passenger_id = p.passenger_id
             JOIN flights f ON b.flight_id = f.flight_id
             WHERE p.email = %s
-        """
-        cursor.execute(query, (email,))
-        bookings = cursor.fetchall()
-        
-        if not bookings:
-            print("\n[!] No bookings found for this email.")
-        else:
-            print(f"\n--- BOOKINGS FOR {email} ---")
-            print(f"{'PNR':<8} {'FLIGHT':<8} {'ROUTE':<20} {'DATE':<12} {'SEAT':<6} {'STATUS'}")
-            print("-" * 70)
-            for b in bookings:
-                print(f"{b['pnr']:<8} {b['flight_number']:<8} {b['origin']}->{b['destination']:<16} {str(b['flight_date']):<12} {b['seat_number']:<6} {b['status']}")
-        
+        """, (email,))
+
+        rows = cursor.fetchall()
+        if not rows:
+            print("[!] No bookings found.")
+            return
+
+        print("\nPNR     FLIGHT   ROUTE              DATE        SEAT  CLASS     STATUS")
+        print("-"*75)
+        for r in rows:
+            print(f"{r['pnr']:<7} {r['flight_number']:<7} "
+                  f"{r['origin']}->{r['destination']:<15} "
+                  f"{r['flight_date']} {r['seat_number']:<5} "
+                  f"{r['seat_class']:<9} {r['status']}")
+
     except OperationCancelled:
-        print("\n[!] Cancelled.")
+        print("[!] View cancelled.")
     finally:
         conn.close()
 
 def cancel_booking():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
-        pnr = get_valid_input("\nEnter PNR to Cancel").upper()
-        
-        cursor.execute("SELECT * FROM bookings WHERE pnr = %s", (pnr,))
-        booking = cursor.fetchone()
-        
-        if not booking:
-            print(f"\n[!] Error: Booking {pnr} not found.")
+        email = get_valid_input("Enter Passenger Email", "email")
+        cursor.execute("SELECT passenger_id FROM passengers WHERE email=%s", (email,))
+        p = cursor.fetchone()
+        if not p:
+            print("[!] Passenger not found.")
             return
 
-        if booking['status'] == 'Cancelled':
-            print(f"\n[!] Booking {pnr} is already cancelled.")
+        cursor.execute("""
+            SELECT pnr, price FROM bookings
+            WHERE passenger_id=%s AND status='Confirmed'
+        """, (p['passenger_id'],))
+
+        rows = cursor.fetchall()
+        if not rows:
+            print("[!] No active bookings.")
             return
-            
-        confirm = get_valid_input(f"Are you sure you want to cancel PNR {pnr}? (Y/N)").upper()
-        if confirm != 'Y':
-            print("\n[!] Cancellation aborted.")
+
+        for r in rows:
+            print(f"PNR: {r['pnr']} | Price: ₱{r['price']}")
+
+        pnr = get_valid_input("Enter PNR to cancel").upper()
+        cursor.execute("SELECT * FROM bookings WHERE pnr=%s", (pnr,))
+        booking = cursor.fetchone()
+
+        if not booking:
+            print("[!] Invalid PNR.")
             return
-            
-        cursor.execute("UPDATE bookings SET status = 'Cancelled' WHERE pnr = %s", (pnr,))
+
+        refund = float(booking['price']) * 0.80
+        cursor.execute("UPDATE bookings SET status='Cancelled' WHERE pnr=%s", (pnr,))
         conn.commit()
-        print(f"\n[SUCCESS] Booking {pnr} has been CANCELLED.")
-        
+
+        print(f"[CANCELLED] Refund Amount: ₱{refund:,.2f}")
+
     except OperationCancelled:
-        print("\n[!] Cancelled.")
-    except Exception as e:
-        print(f"[ERROR] {e}")
+        print("[!] Cancellation cancelled.")
+    finally:
+        conn.close()
+
+def upgrade_booking():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        email = get_valid_input("Enter Passenger Email", "email")
+        cursor.execute("SELECT passenger_id FROM passengers WHERE email=%s", (email,))
+        p = cursor.fetchone()
+        if not p:
+            print("[!] Passenger not found.")
+            return
+
+        cursor.execute("""
+            SELECT pnr, price FROM bookings
+            WHERE passenger_id=%s AND seat_class='Economy' AND status='Confirmed'
+        """, (p['passenger_id'],))
+
+        rows = cursor.fetchall()
+        if not rows:
+            print("[!] No bookings eligible for upgrade.")
+            return
+
+        for r in rows:
+            print(f"PNR: {r['pnr']} | Current Price: ₱{r['price']}")
+
+        pnr = get_valid_input("Enter PNR to upgrade").upper()
+        upgrade_fee = 15000 - 5000
+
+        confirm = get_valid_input(f"Upgrade fee ₱{upgrade_fee}. Confirm? (Y/N)").upper()
+        if confirm != 'Y':
+            return
+
+        cursor.execute("""
+            UPDATE bookings
+            SET seat_class='Business', price=15000
+            WHERE pnr=%s
+        """, (pnr,))
+
+        conn.commit()
+        print("[SUCCESS] Booking upgraded to Business.")
+
+    except OperationCancelled:
+        print("[!] Upgrade cancelled.")
+    finally:
+        conn.close()
+
+def check_in():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        pnr = get_valid_input("Enter Booking PNR").upper()
+        cursor.execute("""
+            SELECT booking_id, status FROM bookings WHERE pnr=%s
+        """, (pnr,))
+        booking = cursor.fetchone()
+
+        if not booking or booking['status'] != 'Confirmed':
+            print("[!] Invalid booking.")
+            return
+
+        cursor.execute("SELECT * FROM checkin WHERE booking_id=%s", (booking['booking_id'],))
+        if cursor.fetchone():
+            print("[!] Already checked in.")
+            return
+
+        bags = get_valid_input("Number of bags", int)
+        cursor.execute(
+            "INSERT INTO checkin (booking_id, bags_checked) VALUES (%s,%s)",
+            (booking['booking_id'], bags)
+        )
+        conn.commit()
+
+        print("[SUCCESS] Check-in completed.")
+
+    except OperationCancelled:
+        print("[!] Check-in cancelled.")
     finally:
         conn.close()
