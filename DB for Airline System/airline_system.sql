@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 05, 2025 at 05:34 PM
+-- Generation Time: Dec 13, 2025 at 11:28 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -83,15 +83,16 @@ CREATE TABLE `checkin` (
   `checkin_id` int(11) NOT NULL,
   `booking_id` int(11) DEFAULT NULL,
   `bags_checked` int(11) DEFAULT NULL,
-  `boarding_time` datetime DEFAULT current_timestamp()
+  `boarding_time` datetime DEFAULT current_timestamp(),
+  `status` enum('Checked-In','Boarded','No-Show') DEFAULT 'Checked-In'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `checkin`
 --
 
-INSERT INTO `checkin` (`checkin_id`, `booking_id`, `bags_checked`, `boarding_time`) VALUES
-(1, 3, 2, '2025-12-05 21:10:11');
+INSERT INTO `checkin` (`checkin_id`, `booking_id`, `bags_checked`, `boarding_time`, `status`) VALUES
+(1, 3, 2, '2025-12-05 21:10:11', 'Checked-In');
 
 -- --------------------------------------------------------
 
@@ -114,15 +115,69 @@ CREATE TABLE `crew` (
 --
 
 INSERT INTO `crew` (`crew_id`, `name`, `role`, `status`, `salary_rate`, `license_status`, `flight_hours`) VALUES
-(1, 'Capt. Ri', 'Pilot', 'On-Duty', 29999, 'Active', 0),
-(2, 'Sarah Lin', 'Cabin Crew', 'On-Duty', 5000, 'Active', 0),
-(3, 'Michael', 'Pilot', 'Available', 30000, 'Active', 0),
-(4, 'Ken Sebastian', 'Co-Pilot', 'On-Duty', 15000, 'Active', 4),
-(5, 'John Paul Irenio', 'Pilot', 'Available', 25000, 'Active', 0),
-(6, 'Jhastine Bieber', 'Cabin Crew', 'Available', 4500, 'Active', 0),
-(7, 'Yvez Saint Lorenz', 'Pilot', 'Available', 25000, 'Active', 0),
-(8, 'John Martin Mariano', 'Cabin Crew', 'Available', 4500, 'Active', 0),
-(9, 'Jordan Cabs', 'Cabin Crew', 'Available', 4500, 'Active', 0);
+(1, 'Capt. Ri', 'Captain', 'Available', 150000, 'Active', 100),
+(2, 'Christian Daing', 'Captain', 'On-Duty', 150000, 'Active', 54),
+(3, 'Michael Boquiron', 'First Officer', 'On-Duty', 90000, 'Active', 24),
+(4, 'Ken Sebastian', 'First Officer', 'Available', 90000, 'Active', 30),
+(5, 'John Paul Irenio', 'Second Officer', 'Available', 60000, 'Active', 10),
+(6, 'Sarah Lin', 'Purser', 'Available', 40000, 'Active', 80),
+(7, 'Jhastine Bieber', 'Flight Attendant', 'On-Duty', 25000, 'Active', 44),
+(8, 'John Martin', 'Flight Attendant', 'Available', 25000, 'Active', 40),
+(9, 'Jordan Cabs', 'Flight Attendant', 'Available', 25000, 'Active', 10),
+(10, 'Carlos Smith', 'Loadmaster', 'Available', 30000, 'Active', 5),
+(11, 'Capt. Marco De Leon', 'Captain', 'Available', 150000, 'Active', 110),
+(12, 'Capt. Victoria Vance', 'Captain', 'Available', 152000, 'Active', 140),
+(13, 'Capt. Elias Thorne', 'Captain', 'Available', 148000, 'Active', 95),
+(14, 'Lucas Wright', 'First Officer', 'Available', 92000, 'Active', 45),
+(15, 'Aiyah Lopez', 'First Officer', 'Available', 89000, 'Active', 30),
+(16, 'David Kim', 'First Officer', 'Available', 90000, 'Active', 55),
+(17, 'Kevin Tan', 'Second Officer', 'Available', 62000, 'Active', 15),
+(18, 'Rachel Green', 'Purser', 'Available', 46000, 'Active', 100),
+(19, 'Mateo Guidicelli', 'Purser', 'Available', 44000, 'Active', 85),
+(20, 'Jenny Dizon', 'Flight Attendant', 'Available', 25000, 'Active', 20),
+(21, 'Markus Cruz', 'Flight Attendant', 'Available', 25000, 'Active', 22),
+(22, 'Bea Morales', 'Flight Attendant', 'Available', 26000, 'Active', 35),
+(23, 'Rico Pascual', 'Flight Attendant', 'Available', 24000, 'Active', 12),
+(24, 'Sofia Andres', 'Flight Attendant', 'Available', 25000, 'Active', 18),
+(25, 'Nurse Elena Cruz', 'Flight Nurse', 'Available', 36000, 'Active', 50),
+(26, 'Agent Jack Reacher', 'Air Marshal', 'Available', 52000, 'Active', 10),
+(27, 'Maria Clara', 'Flight Nurse', 'Available', 35000, 'Active', 40),
+(28, 'Dr. Derek Shepherd', 'Flight Nurse', 'Available', 38000, 'Active', 120),
+(29, 'Nurse Joy', 'Flight Nurse', 'Available', 32000, 'Active', 15),
+(30, 'Ricardo Dalisay', 'Air Marshal', 'Available', 55000, 'Active', 200),
+(31, 'Ethan Hunt', 'Air Marshal', 'Available', 58000, 'Active', 150),
+(32, 'Natasha Romanoff', 'Air Marshal', 'Available', 60000, 'Active', 180),
+(33, 'Arthur Curry', 'Loadmaster', 'Available', 30000, 'Active', 50),
+(34, 'Gregor Clegane', 'Loadmaster', 'Available', 32000, 'Active', 60),
+(35, 'Montgomery Scott', 'Flight Engineer', 'Available', 70000, 'Active', 300),
+(36, 'Tony Stark', 'Flight Engineer', 'Available', 75000, 'Active', 500);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `crew_roles`
+--
+
+CREATE TABLE `crew_roles` (
+  `role_id` int(11) NOT NULL,
+  `role_name` varchar(50) NOT NULL,
+  `default_salary` int(11) DEFAULT 5000
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `crew_roles`
+--
+
+INSERT INTO `crew_roles` (`role_id`, `role_name`, `default_salary`) VALUES
+(1, 'Captain', 150000),
+(2, 'First Officer', 90000),
+(3, 'Second Officer', 60000),
+(4, 'Flight Engineer', 70000),
+(5, 'Purser', 40000),
+(6, 'Flight Attendant', 25000),
+(7, 'Flight Nurse', 35000),
+(8, 'Air Marshal', 50000),
+(9, 'Loadmaster', 30000);
 
 -- --------------------------------------------------------
 
@@ -189,8 +244,8 @@ CREATE TABLE `flight_crew` (
 
 INSERT INTO `flight_crew` (`assignment_id`, `flight_id`, `crew_id`) VALUES
 (1, 1, 2),
-(2, 1, 1),
-(3, 1, 4);
+(2, 1, 3),
+(3, 1, 7);
 
 -- --------------------------------------------------------
 
@@ -270,6 +325,13 @@ ALTER TABLE `crew`
   ADD PRIMARY KEY (`crew_id`);
 
 --
+-- Indexes for table `crew_roles`
+--
+ALTER TABLE `crew_roles`
+  ADD PRIMARY KEY (`role_id`),
+  ADD UNIQUE KEY `role_name` (`role_name`);
+
+--
 -- Indexes for table `feedback`
 --
 ALTER TABLE `feedback`
@@ -332,7 +394,13 @@ ALTER TABLE `checkin`
 -- AUTO_INCREMENT for table `crew`
 --
 ALTER TABLE `crew`
-  MODIFY `crew_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `crew_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+
+--
+-- AUTO_INCREMENT for table `crew_roles`
+--
+ALTER TABLE `crew_roles`
+  MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `feedback`
