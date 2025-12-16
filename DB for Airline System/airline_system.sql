@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 13, 2025 at 11:28 AM
+-- Generation Time: Dec 16, 2025 at 03:26 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -76,6 +76,27 @@ INSERT INTO `bookings` (`booking_id`, `pnr`, `flight_id`, `passenger_id`, `seat_
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `case_logs`
+--
+
+CREATE TABLE `case_logs` (
+  `log_id` int(11) NOT NULL,
+  `case_id` int(11) NOT NULL,
+  `log_note` text NOT NULL,
+  `log_date` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `case_logs`
+--
+
+INSERT INTO `case_logs` (`log_id`, `case_id`, `log_note`, `log_date`) VALUES
+(1, 1, 'Case created. Waiting for airport response.', '2025-12-16 14:24:29'),
+(2, 1, 'Passenger called to follow up. Priority increased.', '2025-12-16 14:24:29');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `checkin`
 --
 
@@ -118,28 +139,28 @@ INSERT INTO `crew` (`crew_id`, `name`, `role`, `status`, `salary_rate`, `license
 (1, 'Capt. Ri', 'Captain', 'Available', 150000, 'Active', 100),
 (2, 'Christian Daing', 'Captain', 'On-Duty', 150000, 'Active', 54),
 (3, 'Michael Boquiron', 'First Officer', 'On-Duty', 90000, 'Active', 24),
-(4, 'Ken Sebastian', 'First Officer', 'Available', 90000, 'Active', 30),
+(4, 'Ken Sebastian', 'First Officer', 'On-Duty', 90000, 'Active', 34),
 (5, 'John Paul Irenio', 'Second Officer', 'Available', 60000, 'Active', 10),
 (6, 'Sarah Lin', 'Purser', 'Available', 40000, 'Active', 80),
 (7, 'Jhastine Bieber', 'Flight Attendant', 'On-Duty', 25000, 'Active', 44),
-(8, 'John Martin', 'Flight Attendant', 'Available', 25000, 'Active', 40),
+(8, 'John Martin', 'Flight Attendant', 'On-Duty', 25000, 'Active', 44),
 (9, 'Jordan Cabs', 'Flight Attendant', 'Available', 25000, 'Active', 10),
 (10, 'Carlos Smith', 'Loadmaster', 'Available', 30000, 'Active', 5),
-(11, 'Capt. Marco De Leon', 'Captain', 'Available', 150000, 'Active', 110),
+(11, 'Capt. Marco De Leon', 'Captain', 'On-Duty', 150000, 'Active', 114),
 (12, 'Capt. Victoria Vance', 'Captain', 'Available', 152000, 'Active', 140),
 (13, 'Capt. Elias Thorne', 'Captain', 'Available', 148000, 'Active', 95),
-(14, 'Lucas Wright', 'First Officer', 'Available', 92000, 'Active', 45),
+(14, 'Lucas Wright', 'First Officer', 'On-Duty', 92000, 'Active', 49),
 (15, 'Aiyah Lopez', 'First Officer', 'Available', 89000, 'Active', 30),
 (16, 'David Kim', 'First Officer', 'Available', 90000, 'Active', 55),
 (17, 'Kevin Tan', 'Second Officer', 'Available', 62000, 'Active', 15),
 (18, 'Rachel Green', 'Purser', 'Available', 46000, 'Active', 100),
 (19, 'Mateo Guidicelli', 'Purser', 'Available', 44000, 'Active', 85),
-(20, 'Jenny Dizon', 'Flight Attendant', 'Available', 25000, 'Active', 20),
+(20, 'Jenny Dizon', 'Flight Attendant', 'On-Duty', 25000, 'Active', 24),
 (21, 'Markus Cruz', 'Flight Attendant', 'Available', 25000, 'Active', 22),
-(22, 'Bea Morales', 'Flight Attendant', 'Available', 26000, 'Active', 35),
+(22, 'Bea Morales', 'Flight Attendant', 'On-Duty', 26000, 'Active', 39),
 (23, 'Rico Pascual', 'Flight Attendant', 'Available', 24000, 'Active', 12),
 (24, 'Sofia Andres', 'Flight Attendant', 'Available', 25000, 'Active', 18),
-(25, 'Nurse Elena Cruz', 'Flight Nurse', 'Available', 36000, 'Active', 50),
+(25, 'Nurse Elena Cruz', 'Flight Nurse', 'On-Duty', 36000, 'Active', 54),
 (26, 'Agent Jack Reacher', 'Air Marshal', 'Available', 52000, 'Active', 10),
 (27, 'Maria Clara', 'Flight Nurse', 'Available', 35000, 'Active', 40),
 (28, 'Dr. Derek Shepherd', 'Flight Nurse', 'Available', 38000, 'Active', 120),
@@ -150,7 +171,8 @@ INSERT INTO `crew` (`crew_id`, `name`, `role`, `status`, `salary_rate`, `license
 (33, 'Arthur Curry', 'Loadmaster', 'Available', 30000, 'Active', 50),
 (34, 'Gregor Clegane', 'Loadmaster', 'Available', 32000, 'Active', 60),
 (35, 'Montgomery Scott', 'Flight Engineer', 'Available', 70000, 'Active', 300),
-(36, 'Tony Stark', 'Flight Engineer', 'Available', 75000, 'Active', 500);
+(36, 'Tony Stark', 'Flight Engineer', 'Available', 75000, 'Active', 500),
+(37, 'Jerome Irenio Jr.', 'Loadmaster', 'Available', 12000, 'Active', 0);
 
 -- --------------------------------------------------------
 
@@ -245,7 +267,14 @@ CREATE TABLE `flight_crew` (
 INSERT INTO `flight_crew` (`assignment_id`, `flight_id`, `crew_id`) VALUES
 (1, 1, 2),
 (2, 1, 3),
-(3, 1, 7);
+(3, 1, 7),
+(4, 1, 11),
+(5, 1, 4),
+(6, 1, 14),
+(7, 1, 8),
+(8, 1, 20),
+(9, 1, 22),
+(10, 1, 25);
 
 -- --------------------------------------------------------
 
@@ -292,6 +321,29 @@ INSERT INTO `passengers` (`passenger_id`, `name`, `email`, `phone`, `loyalty_poi
 (9, 'Sander Cruz Ford', 'Sander@gmail.com', NULL, 1500, 'Blue'),
 (10, 'Ken Yap', 'KenEricYap@gmail.com', NULL, 1500, 'Blue');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `support_cases`
+--
+
+CREATE TABLE `support_cases` (
+  `case_id` int(11) NOT NULL,
+  `passenger_id` int(11) NOT NULL,
+  `category` enum('Complaint','Inquiry','Feedback','Refund Request') NOT NULL,
+  `subject` varchar(100) NOT NULL,
+  `status` enum('Open','In Progress','Resolved','Closed') DEFAULT 'Open',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `support_cases`
+--
+
+INSERT INTO `support_cases` (`case_id`, `passenger_id`, `category`, `subject`, `status`, `created_at`) VALUES
+(1, 1, 'Complaint', 'Baggage delayed on Flight PR101', 'Open', '2025-12-16 14:24:29'),
+(2, 1, 'Inquiry', 'Loyalty points update request', 'Resolved', '2025-12-16 14:24:29');
+
 --
 -- Indexes for dumped tables
 --
@@ -310,6 +362,13 @@ ALTER TABLE `bookings`
   ADD UNIQUE KEY `pnr` (`pnr`),
   ADD KEY `flight_id` (`flight_id`),
   ADD KEY `passenger_id` (`passenger_id`);
+
+--
+-- Indexes for table `case_logs`
+--
+ALTER TABLE `case_logs`
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `case_id` (`case_id`);
 
 --
 -- Indexes for table `checkin`
@@ -369,6 +428,13 @@ ALTER TABLE `passengers`
   ADD UNIQUE KEY `email` (`email`);
 
 --
+-- Indexes for table `support_cases`
+--
+ALTER TABLE `support_cases`
+  ADD PRIMARY KEY (`case_id`),
+  ADD KEY `passenger_id` (`passenger_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -385,6 +451,12 @@ ALTER TABLE `bookings`
   MODIFY `booking_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
+-- AUTO_INCREMENT for table `case_logs`
+--
+ALTER TABLE `case_logs`
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `checkin`
 --
 ALTER TABLE `checkin`
@@ -394,7 +466,7 @@ ALTER TABLE `checkin`
 -- AUTO_INCREMENT for table `crew`
 --
 ALTER TABLE `crew`
-  MODIFY `crew_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `crew_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `crew_roles`
@@ -418,7 +490,7 @@ ALTER TABLE `flights`
 -- AUTO_INCREMENT for table `flight_crew`
 --
 ALTER TABLE `flight_crew`
-  MODIFY `assignment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `assignment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `maintenance_logs`
@@ -433,6 +505,12 @@ ALTER TABLE `passengers`
   MODIFY `passenger_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
+-- AUTO_INCREMENT for table `support_cases`
+--
+ALTER TABLE `support_cases`
+  MODIFY `case_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- Constraints for dumped tables
 --
 
@@ -442,6 +520,12 @@ ALTER TABLE `passengers`
 ALTER TABLE `bookings`
   ADD CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`flight_id`) REFERENCES `flights` (`flight_id`),
   ADD CONSTRAINT `bookings_ibfk_2` FOREIGN KEY (`passenger_id`) REFERENCES `passengers` (`passenger_id`);
+
+--
+-- Constraints for table `case_logs`
+--
+ALTER TABLE `case_logs`
+  ADD CONSTRAINT `case_logs_ibfk_1` FOREIGN KEY (`case_id`) REFERENCES `support_cases` (`case_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `checkin`
@@ -473,6 +557,12 @@ ALTER TABLE `flight_crew`
 --
 ALTER TABLE `maintenance_logs`
   ADD CONSTRAINT `maintenance_logs_ibfk_1` FOREIGN KEY (`aircraft_id`) REFERENCES `aircrafts` (`aircraft_id`);
+
+--
+-- Constraints for table `support_cases`
+--
+ALTER TABLE `support_cases`
+  ADD CONSTRAINT `support_cases_ibfk_1` FOREIGN KEY (`passenger_id`) REFERENCES `passengers` (`passenger_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
